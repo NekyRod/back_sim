@@ -1,10 +1,15 @@
 # app/routes/pacientes_routes.py
-from fastapi import APIRouter, status
+from fastapi import APIRouter, status,Depends
 from pydantic import BaseModel
 from datetime import date
 from app.control import pacientes_control
+from app.config.security import get_current_user_token
 
-router = APIRouter(prefix="/pacientes", tags=["pacientes"])
+router = APIRouter(
+    prefix="/pacientes", 
+    tags=["pacientes"],
+    dependencies=[Depends(get_current_user_token)],  # ← protege TODO el router
+)
 
 
 class PacienteCreate(BaseModel):

@@ -1,10 +1,15 @@
 # app/routes/citas_routes.py
-from fastapi import APIRouter, status
+from fastapi import APIRouter, status,Depends
 from pydantic import BaseModel
 from datetime import date, time
 from app.control.citas_control import crear_cita_control
+from app.config.security import get_current_user_token
 
-router = APIRouter(prefix="/citas", tags=["citas"])
+router = APIRouter(
+    prefix="/citas", 
+    tags=["citas"],
+    dependencies=[Depends(get_current_user_token)],  # ← protege TODO el router
+)
 
 class CitaRequest(BaseModel):
     tipo_identificacion: str

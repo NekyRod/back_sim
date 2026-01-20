@@ -1,10 +1,11 @@
 from fastapi import FastAPI
 from app.routes import pacientes_routes, citas_routes, profesionales_routes, disponibilidades_routes
 from fastapi.middleware.cors import CORSMiddleware
+from app.config.settings import settings 
 
 app = FastAPI(title="Agenda Service")
 origins = [
-    "http://localhost:5173",  # Vite
+   settings.FRONTEND_URL,  # Vite
 ]
 
 app.add_middleware(
