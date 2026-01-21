@@ -23,7 +23,7 @@ const professionals = [
 
 const holidays = [
   { day: 1, month: 1 },
-  { day: 6, month: 1 },
+  { day: 12, month: 1 },
   { day: 24, month: 3 },
   { day: 17, month: 4 },
   { day: 18, month: 4 },

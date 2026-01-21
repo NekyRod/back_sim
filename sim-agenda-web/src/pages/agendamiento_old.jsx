@@ -133,67 +133,7 @@ export default function Agendamiento() {
     cargarTiposServicio();
     cargarTiposPbs();
   }, []);
-  // Escuchar selección de paciente desde búsqueda global
-  useEffect(() => {
-    function handlePacienteSeleccionado(e) {
-      const paciente = e.detail;
-      
-      // Llenar TODOS los campos
-      setTipoIdentificacion(paciente.tipo_identificacion || '');
-      setNumeroId(paciente.numero_identificacion || '');
-      setNombrePaciente(paciente.nombre_completo || '');
-      setTelefonoFijo(paciente.telefono_fijo || '');
-      setCelular(paciente.telefono_celular || '');
-      setSegundoCelular(paciente.segundo_telefono_celular || '');
-      setTitularSegundoCelular(paciente.titular_segundo_celular || '');
-      setDireccion(paciente.direccion || '');
-      setCorreo(paciente.correo_electronico || '');
-      setLugar(paciente.lugar_residencia || '');
-      setFechaNac(paciente.fecha_nacimiento || '');
-      setTipoDocAcompanante(paciente.tipo_doc_acompanante || '');
-      setNombreAcompanante(paciente.nombre_acompanante || '');
-      setParentescoAcompanante(paciente.parentesco_acompanante || '');
-      
-      showToast('Datos del paciente cargados correctamente');
-    }
 
-    window.addEventListener('pacienteSeleccionado', handlePacienteSeleccionado);
-    return () => window.removeEventListener('pacienteSeleccionado', handlePacienteSeleccionado);
-  }, []);
-
-  // Buscar paciente cuando se ingresa tipo y número de identificación
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      if (tipoIdentificacion && numeroId && numeroId.length >= 5) {
-        buscarDatosPaciente(tipoIdentificacion, numeroId);
-      }
-    }, 500);
-    return () => clearTimeout(timer);
-  }, [tipoIdentificacion, numeroId]);
-
-  async function buscarDatosPaciente(tipo, numero) {
-    try {
-      const resp = await apiFetch(`${BACKEND_URL}/pacientes/documento/${tipo}/${numero}`);
-      if (resp) {
-        setNombrePaciente(resp.nombre_completo || '');
-        setTelefonoFijo(resp.telefono_fijo || '');
-        setCelular(resp.telefono_celular || '');
-        setSegundoCelular(resp.segundo_telefono_celular || '');
-        setTitularSegundoCelular(resp.titular_segundo_celular || '');
-        setDireccion(resp.direccion || '');
-        setCorreo(resp.correo_electronico || '');
-        setLugar(resp.lugar_residencia || '');
-        setFechaNac(resp.fecha_nacimiento || '');
-        setTipoDocAcompanante(resp.tipo_doc_acompanante || '');
-        setNombreAcompanante(resp.nombre_acompanante || '');
-        setParentescoAcompanante(resp.parentesco_acompanante || '');
-        
-        showToast('Datos del paciente cargados correctamente');
-      }
-    } catch (err) {
-      console.log('Paciente no encontrado, es un registro nuevo');
-    }
-  }
   async function cargarTiposId() {
     try {
       const resp = await apiFetch(`${BACKEND_URL}/tiposidentificacion`);
