@@ -1,5 +1,14 @@
 from fastapi import FastAPI
-from app.routes import pacientes_routes, citas_routes, profesionales_routes, disponibilidades_routes
+from app.routes import (
+    pacientes_routes, 
+    citas_routes, 
+    profesionales_routes, 
+    disponibilidades_routes,
+    tiposidentificacion_routes,
+    ciudadesresidencia_routes,  
+    tiposservicio_routes,       
+    tipospbs_routes
+) 
 from fastapi.middleware.cors import CORSMiddleware
 from app.config.settings import settings 
 
@@ -17,5 +26,9 @@ app.add_middleware(
 )
 app.include_router(pacientes_routes.router)
 app.include_router(citas_routes.router)
+app.include_router(tiposidentificacion_routes.router) 
+app.include_router(ciudadesresidencia_routes.router)
+app.include_router(tiposservicio_routes.router)
+app.include_router(tipospbs_routes.router)
 #app.include_router(profesionales_routes.router)
 #app.include_router(disponibilidades_routes.router)
