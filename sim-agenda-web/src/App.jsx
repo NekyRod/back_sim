@@ -141,14 +141,19 @@ function SearchBar() {
 // ========== COMPONENTE PRINCIPAL CON RUTAS ==========
 function AppContent() {
   const [showConfigMenu, setShowConfigMenu] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  useEffect(() => {
+    const token = sessionStorage.getItem('auth_token');
+    if (token) setIsAuthenticated(true);
+  }, []);
 
   function handleLogout() {
     sessionStorage.removeItem('auth_token');
     sessionStorage.removeItem('auth_user');
-    setIsAuthenticated(false);  // ← RESTAURADO
-    setShowConfigMenu(false);
+    setIsAuthenticated(false);
+    setShowConfigMenu(false); // ← Reset menú config
   }
-
   function handleAbrirConfiguracion() {
     setShowConfigMenu(true);
   }
@@ -156,7 +161,9 @@ function AppContent() {
   function handleRegresar() {
     setShowConfigMenu(false);
   }
-
+  if (!isAuthenticated) {
+    return <LoginPage onLoginSuccess={() => setIsAuthenticated(true)} />;
+  }
   return (
     <div>
       {/* BARRA DE BÚSQUEDA - ARRIBA DE TODO */}
@@ -293,17 +300,6 @@ function AppContent() {
 
 // ========== EXPORT DEFAULT ==========
 export default function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-
-  useEffect(() => {
-    const token = sessionStorage.getItem('auth_token');
-    if (token) setIsAuthenticated(true);
-  }, []);
-
-  if (!isAuthenticated) {
-    return <LoginPage onLoginSuccess={() => setIsAuthenticated(true)} />;
-  }
-
   return (
     <BrowserRouter>
       <AppContent />

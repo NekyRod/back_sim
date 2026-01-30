@@ -27,8 +27,8 @@ export function showConfirm(mensaje, opciones = {}) {
         <h3>${opciones.titulo || 'Wolf Medic'}</h3>
         <p>${mensaje}</p>
         <div class="confirm-buttons">
-          <button class="confirm-btn-accept" id="confirm-accept">Aceptar</button>
-          <button class="confirm-btn-cancel" id="confirm-cancel">Cancelar</button>
+          <button class="confirm-btn-accept" id="confirm-accept">${opciones.confirmText || 'Aceptar'}</button>
+          <button class="confirm-btn-cancel" id="confirm-cancel">${opciones.cancelText || 'Cancelar'}</button>
         </div>
       </div>
     `;

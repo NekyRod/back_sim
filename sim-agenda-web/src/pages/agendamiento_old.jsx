@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { apiFetch } from '../api/client';
 import { showToast } from '../utils/ui';
 import ConfirmacionCitaModal from '../components/ModalConfirmacionCita';
+import ModalAgendarCita from '../components/ModalAgendarCita'; // ← NUEVO
 
 export default function Agendamiento() {
   const [activeTab, setActiveTab] = useState('paciente');
@@ -15,8 +16,8 @@ export default function Agendamiento() {
   const [nombrePaciente, setNombrePaciente] = useState('');
   const [telefonoFijo, setTelefonoFijo] = useState('');
   const [celular, setCelular] = useState('');
-  const [segundoCelular, setSegundoCelular] = useState(''); // ← NUEVO
-  const [titularSegundoCelular, setTitularSegundoCelular] = useState(''); // ← NUEVO
+  const [segundoCelular, setSegundoCelular] = useState('');
+  const [titularSegundoCelular, setTitularSegundoCelular] = useState('');
   const [direccion, setDireccion] = useState('');
   const [correo, setCorreo] = useState('');
   const [lugar, setLugar] = useState('');
@@ -24,9 +25,9 @@ export default function Agendamiento() {
   const [edad, setEdad] = useState(null);
 
   // Campos del acompañante (para menores)
-  const [tipoDocAcompanante, setTipoDocAcompanante] = useState(''); // ← NUEVO
-  const [nombreAcompanante, setNombreAcompanante] = useState(''); // ← NUEVO
-  const [parentescoAcompanante, setParentescoAcompanante] = useState(''); // ← NUEVO
+  const [tipoDocAcompanante, setTipoDocAcompanante] = useState('');
+  const [nombreAcompanante, setNombreAcompanante] = useState('');
+  const [parentescoAcompanante, setParentescoAcompanante] = useState('');
   const [mostrarCamposAcompanante, setMostrarCamposAcompanante] = useState(false);
 
   // Estado de campos de la cita
@@ -37,7 +38,9 @@ export default function Agendamiento() {
   const [chk6Meses, setChk6Meses] = useState(false);
   const [motivoCita, setMotivoCita] = useState('');
   const [profesional, setProfesional] = useState('');
+  const [profesionalId, setProfesionalId] = useState(''); // ← NUEVO
   const [horaRecomendada, setHoraRecomendada] = useState('');
+  const [horaFin, setHoraFin] = useState(''); // ← NUEVO
   const [motivosOptions, setMotivosOptions] = useState([]);
   const [mostrarTipoPbs, setMostrarTipoPbs] = useState(false);
   const [tipoPbs, setTipoPbs] = useState('');
@@ -49,6 +52,8 @@ export default function Agendamiento() {
   const [ciudades, setCiudades] = useState([]);
   const [tiposServicio, setTiposServicio] = useState([]);
   const [tiposPbs, setTiposPbs] = useState([]);
+  const [especialidades, setEspecialidades] = useState([]); // ← NUEVO
+  const [showModalAgendar, setShowModalAgendar] = useState(false); // ← NUEVO
 
   const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 
@@ -132,11 +137,73 @@ export default function Agendamiento() {
     cargarCiudades();
     cargarTiposServicio();
     cargarTiposPbs();
+    cargarEspecialidades(); // ← NUEVO
   }, []);
+
+  // Escuchar selección de paciente desde búsqueda global
+  useEffect(() => {
+    function handlePacienteSeleccionado(e) {
+      const paciente = e.detail;
+      
+      setTipoIdentificacion(paciente.tipo_identificacion || '');
+      setNumeroId(paciente.numero_identificacion || '');
+      setNombrePaciente(paciente.nombre_completo || '');
+      setTelefonoFijo(paciente.telefono_fijo || '');
+      setCelular(paciente.telefono_celular || '');
+      setSegundoCelular(paciente.segundo_telefono_celular || '');
+      setTitularSegundoCelular(paciente.titular_segundo_celular || '');
+      setDireccion(paciente.direccion || '');
+      setCorreo(paciente.correo_electronico || '');
+      setLugar(paciente.lugar_residencia || '');
+      setFechaNac(paciente.fecha_nacimiento || '');
+      setTipoDocAcompanante(paciente.tipo_doc_acompanante || '');
+      setNombreAcompanante(paciente.nombre_acompanante || '');
+      setParentescoAcompanante(paciente.parentesco_acompanante || '');
+      
+      showToast('Datos del paciente cargados correctamente');
+    }
+
+    window.addEventListener('pacienteSeleccionado', handlePacienteSeleccionado);
+    return () => window.removeEventListener('pacienteSeleccionado', handlePacienteSeleccionado);
+  }, []);
+
+  // Buscar paciente cuando se ingresa tipo y número de identificación
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (tipoIdentificacion && numeroId && numeroId.length >= 5) {
+        buscarDatosPaciente(tipoIdentificacion, numeroId);
+      }
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [tipoIdentificacion, numeroId]);
+
+  async function buscarDatosPaciente(tipo, numero) {
+    try {
+      const resp = await apiFetch(`${BACKEND_URL}/pacientes/documento/${tipo}/${numero}`);
+      if (resp) {
+        setNombrePaciente(resp.nombre_completo || '');
+        setTelefonoFijo(resp.telefono_fijo || '');
+        setCelular(resp.telefono_celular || '');
+        setSegundoCelular(resp.segundo_telefono_celular || '');
+        setTitularSegundoCelular(resp.titular_segundo_celular || '');
+        setDireccion(resp.direccion || '');
+        setCorreo(resp.correo_electronico || '');
+        setLugar(resp.lugar_residencia || '');
+        setFechaNac(resp.fecha_nacimiento || '');
+        setTipoDocAcompanante(resp.tipo_doc_acompanante || '');
+        setNombreAcompanante(resp.nombre_acompanante || '');
+        setParentescoAcompanante(resp.parentesco_acompanante || '');
+        
+        showToast('Datos del paciente cargados correctamente');
+      }
+    } catch (err) {
+      console.log('Paciente no encontrado, es un registro nuevo');
+    }
+  }
 
   async function cargarTiposId() {
     try {
-      const resp = await apiFetch(`${BACKEND_URL}/tiposidentificacion`);
+      const resp = await apiFetch(`${BACKEND_URL}/tiposidentificacion/`);
       setTiposId(resp.data || []);
     } catch (err) {
       console.error('Error cargando tipos ID:', err);
@@ -167,6 +234,16 @@ export default function Agendamiento() {
       setTiposPbs(resp.data || []);
     } catch (err) {
       console.error('Error cargando tipos PBS:', err);
+    }
+  }
+
+  // ← NUEVA FUNCIÓN
+  async function cargarEspecialidades() {
+    try {
+      const resp = await apiFetch(`${BACKEND_URL}/especialidades/`);
+      setEspecialidades(resp.data || []);
+    } catch (err) {
+      console.error('Error cargando especialidades:', err);
     }
   }
 
@@ -235,12 +312,10 @@ export default function Agendamiento() {
       return false;
     }
 
-    // Validar edad vs tipo de documento
     if (!validarEdadYTipoDocumento()) {
       return false;
     }
 
-    // Validar campos de acompañante si es menor
     if (mostrarCamposAcompanante) {
       if (!tipoDocAcompanante || !nombreAcompanante || !parentescoAcompanante) {
         showToast('Los datos del acompañante son obligatorios para menores de edad', 'error');
@@ -256,6 +331,26 @@ export default function Agendamiento() {
       if (!validarTabPaciente()) return;
     }
     setActiveTab(tab);
+  }
+
+  // ← NUEVA FUNCIÓN: Abrir modal
+  function handleAbrirModalAgendar() {
+    if (!motivoCita) {
+      showToast('Debe seleccionar un motivo de cita primero', 'error');
+      return;
+    }
+    setShowModalAgendar(true);
+  }
+
+  // ← NUEVA FUNCIÓN: Confirmar desde el modal
+  function handleConfirmarCita(datos) {
+    setProfesionalId(datos.profesional_id);
+    setProfesional(datos.profesional_nombre);
+    setFechaProg(datos.fecha);
+    setHoraRecomendada(datos.hora_inicio);
+    setHoraFin(datos.hora_fin);
+    setShowModalAgendar(false);
+    showToast('Cita programada correctamente');
   }
 
   async function handleSubmit(e) {
@@ -278,25 +373,9 @@ export default function Agendamiento() {
       return;
     }
 
-    if (!profesional) {
-      showToast('Debe seleccionar el profesional.', 'error');
-      return;
-    }
-
-    const mapaProfesionales = {
-      'DR RAMON ACEVEDO 1143373795': 1,
-      'DRA MACIEL VALENCIA 30238388': 2,
-      'DRA ANNY HENRIQUEZ 53106343': 3,
-      'DRA SANDY VITOLA 1143447511': 4,
-      'DRA MILENA MORA 52427920': 5,
-      'DRA JULIANA MENDOZA 1018505450': 6,
-      'DRA ELIANA ORTEGON 1053811550': 7,
-      'DR DIEGO BECERRA RAMON 1143373795': 8,
-    };
-
-    const profesionalId = mapaProfesionales[profesional];
+    // ← MODIFICADO: Validar que se haya programado desde el modal
     if (!profesionalId) {
-      showToast('Profesional no configurado en el sistema.', 'error');
+      showToast('Debe programar la cita usando el botón "Buscar Agenda".', 'error');
       return;
     }
 
@@ -306,19 +385,20 @@ export default function Agendamiento() {
       nombre_paciente: nombrePaciente,
       telefono_fijo: telefonoFijo,
       telefono_celular: celular,
-      segundo_telefono_celular: segundoCelular, // ← NUEVO
-      titular_segundo_celular: titularSegundoCelular, // ← NUEVO
+      segundo_telefono_celular: segundoCelular,
+      titular_segundo_celular: titularSegundoCelular,
       direccion,
       correo_electronico: correo,
       lugar_residencia: lugar,
       fecha_nacimiento: fechaNac || null,
-      tipo_doc_acompanante: tipoDocAcompanante, // ← NUEVO
-      nombre_acompanante: nombreAcompanante, // ← NUEVO
-      parentesco_acompanante: parentescoAcompanante, // ← NUEVO
-      profesional_id: profesionalId,
+      tipo_doc_acompanante: tipoDocAcompanante,
+      nombre_acompanante: nombreAcompanante,
+      parentesco_acompanante: parentescoAcompanante,
+      profesional_id: profesionalId, // ← USAR EL ID DEL MODAL
       fecha_programacion: fechaProg,
       fecha_solicitada: fechaSolicitada,
       hora: horaRecomendada,
+      hora_fin: horaFin, // ← NUEVO
       tipo_servicio: tipoServicio,
       tipo_pbs: tipoPbs,
       mas_6_meses: chk6Meses,
@@ -327,7 +407,7 @@ export default function Agendamiento() {
     };
 
     try {
-      await apiFetch(`${BACKEND_URL}/citas`, {
+      await apiFetch(`${BACKEND_URL}/citas/`, {
         method: 'POST',
         body: JSON.stringify(payload),
       });
@@ -347,6 +427,10 @@ export default function Agendamiento() {
       showToast(err.message, 'error');
     }
   }
+
+  // ← CALCULAR DURACIÓN BASE
+  const especialidadSeleccionada = especialidades.find(e => e.codigo === motivoCita);
+  const duracionBase = especialidadSeleccionada?.duracion_minutos || 20;
 
   return (
     <div style={{ padding: '20px', maxWidth: '1200px', margin: '0 auto' }}>
@@ -589,37 +673,6 @@ export default function Agendamiento() {
 
             <div style={{ display: 'grid', gap: '15px' }}>
               <label style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
-                Fecha de programación *
-                <input
-                  type="date"
-                  value={fechaProg}
-                  onChange={(e) => setFechaProg(e.target.value)}
-                  required
-                  style={{ padding: '10px', borderRadius: '4px', border: '1px solid #ccc' }}
-                />
-              </label>
-
-              <label style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
-                Fecha solicitada por el paciente
-                <input
-                  type="date"
-                  value={fechaSolicitada}
-                  onChange={(e) => setFechaSolicitada(e.target.value)}
-                  style={{ padding: '10px', borderRadius: '4px', border: '1px solid #ccc' }}
-                />
-              </label>
-
-              <label style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
-                Observación de la cita
-                <textarea
-                  value={observacion}
-                  onChange={(e) => setObservacion(e.target.value)}
-                  rows="3"
-                  style={{ padding: '10px', borderRadius: '4px', border: '1px solid #ccc', resize: 'vertical' }}
-                />
-              </label>
-
-              <label style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
                 Tipo de servicio *
                 <select
                   value={tipoServicio}
@@ -645,6 +698,23 @@ export default function Agendamiento() {
                 Hace más de 6 meses no asiste a odontología
               </label>
 
+              <label style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                Motivo Cita *
+                <select
+                  value={motivoCita}
+                  onChange={(e) => setMotivoCita(e.target.value)}
+                  required
+                  style={{ padding: '10px', borderRadius: '4px', border: '1px solid #ccc' }}
+                >
+                  <option value="">Seleccione uno</option>
+                  {motivosOptions.map((o) => (
+                    <option key={o.v} value={o.v}>
+                      {o.t}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
               {mostrarTipoPbs && (
                 <label style={{ display: 'flex', flexDirection: 'column', gap: '5px' }} id="grupo-tipo-pbs">
                   Tipo PBS *
@@ -664,51 +734,61 @@ export default function Agendamiento() {
                 </label>
               )}
 
-              <label style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
-                Motivo Cita *
-                <select
-                  value={motivoCita}
-                  onChange={(e) => setMotivoCita(e.target.value)}
-                  required
-                  style={{ padding: '10px', borderRadius: '4px', border: '1px solid #ccc' }}
+              {/* ← BOTÓN BUSCAR AGENDA */}
+              <div style={{ marginTop: '10px', marginBottom: '10px' }}>
+                <button
+                  type="button"
+                  onClick={handleAbrirModalAgendar}
+                  disabled={!motivoCita}
+                  style={{
+                    width: '100%',
+                    padding: '14px',
+                    background: motivoCita ? '#2c5f8d' : '#ccc',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '4px',
+                    fontSize: '15px',
+                    fontWeight: '600',
+                    cursor: motivoCita ? 'pointer' : 'not-allowed',
+                  }}
                 >
-                  <option value="">Seleccione uno</option>
-                  {motivosOptions.map((o) => (
-                    <option key={o.v} value={o.v}>
-                      {o.t}
-                    </option>
-                  ))}
-                </select>
-              </label>
+                  📅 Buscar Agenda
+                </button>
+
+                {/* ← MOSTRAR INFO PROGRAMADA */}
+                {profesional && (
+                  <div style={{
+                    marginTop: '12px',
+                    padding: '12px',
+                    background: '#e8f4ff',
+                    border: '1px solid #b3d9ff',
+                    borderRadius: '6px',
+                    fontSize: '14px',
+                  }}>
+                    <strong>Profesional:</strong> {profesional}<br />
+                    <strong>Fecha:</strong> {fechaProg}<br />
+                    <strong>Hora:</strong> {horaRecomendada} - {horaFin}
+                  </div>
+                )}
+              </div>
 
               <label style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
-                Profesional *
-                <select
-                  value={profesional}
-                  onChange={(e) => setProfesional(e.target.value)}
-                  required
-                  style={{ padding: '10px', borderRadius: '4px', border: '1px solid #ccc' }}
-                >
-                  <option value="">Seleccione uno</option>
-                  <option value="DR RAMON ACEVEDO 1143373795">DR RAMON ACEVEDO 1143373795</option>
-                  <option value="DRA MACIEL VALENCIA 30238388">DRA MACIEL VALENCIA 30238388</option>
-                  <option value="DRA ANNY HENRIQUEZ 53106343">DRA ANNY HENRIQUEZ 53106343</option>
-                  <option value="DRA SANDY VITOLA 1143447511">DRA SANDY VITOLA 1143447511</option>
-                  <option value="DRA MILENA MORA 52427920">DRA MILENA MORA 52427920</option>
-                  <option value="DRA JULIANA MENDOZA 1018505450">DRA JULIANA MENDOZA 1018505450</option>
-                  <option value="DRA ELIANA ORTEGON 1053811550">DRA ELIANA ORTEGON 1053811550</option>
-                  <option value="DR DIEGO BECERRA RAMON 1143373795">DR DIEGO BECERRA RAMON 1143373795</option>
-                </select>
-              </label>
-
-              <label style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
-                Hora recomendada *
+                Fecha solicitada por el paciente
                 <input
-                  type="time"
-                  value={horaRecomendada}
-                  onChange={(e) => setHoraRecomendada(e.target.value)}
-                  required
+                  type="date"
+                  value={fechaSolicitada}
+                  onChange={(e) => setFechaSolicitada(e.target.value)}
                   style={{ padding: '10px', borderRadius: '4px', border: '1px solid #ccc' }}
+                />
+              </label>
+
+              <label style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                Observación de la cita
+                <textarea
+                  value={observacion}
+                  onChange={(e) => setObservacion(e.target.value)}
+                  rows="3"
+                  style={{ padding: '10px', borderRadius: '4px', border: '1px solid #ccc', resize: 'vertical' }}
                 />
               </label>
 
@@ -740,6 +820,15 @@ export default function Agendamiento() {
         onDescargarPdf={() => {
           // Lógica de descarga PDF
         }}
+      />
+
+      {/* ← MODAL BUSCAR AGENDA */}
+      <ModalAgendarCita
+        open={showModalAgendar}
+        especialidadId={motivoCita}
+        duracionBase={duracionBase}
+        onClose={() => setShowModalAgendar(false)}
+        onConfirmar={handleConfirmarCita}
       />
     </div>
   );

@@ -16,7 +16,7 @@ export default function LoginPage({ onLoginSuccess }) {
     setLoading(true);
 
     try {
-      console.log('TOKEN_URL =>', TOKEN_URL);
+      //console.log('TOKEN_URL =>', TOKEN_URL);
       const resp = await fetch(TOKEN_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
